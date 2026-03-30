@@ -1,0 +1,15 @@
+
+fastapi
+uvicorn[standard]
+httpx
+redis
+asyncpg
+SQLAlchemy
+pydantic
+pydantic-settings
+beautifulsoup4
+dateparser
+python-jose[cryptography]
+passlib[bcrypt]
+
+# For frontend, dependencies are in package.json

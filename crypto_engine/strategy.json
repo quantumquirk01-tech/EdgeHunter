@@ -1,0 +1,33 @@
+
+{
+  "signal_engine": {
+    "weights": {
+      "major_exchange": {
+        "binance": 5,
+        "bybit": 4,
+        "kucoin": 3,
+        "gateio": 2,
+        "default": 1
+      },
+      "announcement_speed": 4,
+      "low_liquidity": 3,
+      "orderbook_imbalance": 3,
+      "social_velocity": 2,
+      "crowded_trade_penalty": -3
+    },
+    "thresholds": {
+      "enter": 8.0,
+      "watch": 5.0
+    },
+    "max_event_age_seconds": 30
+  },
+  "risk_engine": {
+    "fixed_position_size_usd": 10.0,
+    "stop_loss_percentage": 8.0,
+    "take_profit_1_percentage": 20.0,
+    "take_profit_2_percentage": 50.0,
+    "max_concurrent_trades": 3,
+    "max_daily_loss_usd": 10.0,
+    "max_spread_percentage": 2.0
+  }
+}
