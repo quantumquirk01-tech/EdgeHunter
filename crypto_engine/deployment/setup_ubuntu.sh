@@ -31,6 +31,7 @@ cat > .env << 'EOF'
 # Database
 DATABASE_URL=postgresql+asyncpg://crypto_user:strong_password@db:5432/crypto_db
 REDIS_URL=redis://redis:6379
+BACKEND_PUBLIC_DOMAIN=api.example.com
 
 # API Keys (REPLACE WITH REAL KEYS!)
 CMC_API_KEY=YOUR_COINMARKETCAP_API_KEY
@@ -52,11 +53,18 @@ TELEGRAM_CHAT_ID=YOUR_TELEGRAM_CHAT_ID
 SECRET_KEY=change_this_to_a_very_strong_random_secret_key
 
 # CORS
-CORS_ORIGINS=http://localhost:3000,https://edgehunter.vercel.app
+CORS_ORIGINS=http://localhost:3000,https://edgehunter-frontend.vercel.app
 EOF
 
 # Create docker-compose file for production
 echo "[5/6] Creating production Docker Compose..."
+cat > Caddyfile << 'EOF'
+{$BACKEND_PUBLIC_DOMAIN} {
+  encode gzip
+  reverse_proxy backend:8000
+}
+EOF
+
 cat > docker-compose.prod.yml << 'EOF'
 version: '3.8'
 
@@ -65,8 +73,8 @@ services:
     build:
       context: ./crypto_engine
       dockerfile: ./backend/Dockerfile
-    ports:
-      - "8001:8000"
+    expose:
+      - "8000"
     volumes:
       - ./crypto_engine/backend/app:/app/app
     env_file:
@@ -78,6 +86,23 @@ services:
     networks:
       - crypto-net
     command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - BACKEND_PUBLIC_DOMAIN=${BACKEND_PUBLIC_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    networks:
+      - crypto-net
 
   db:
     image: postgres:14-alpine
@@ -103,6 +128,8 @@ networks:
 
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:
 EOF
 
 # Build and start containers
@@ -115,9 +142,10 @@ echo "============================================"
 echo "Setup complete!"
 echo "============================================"
 echo ""
-echo "Backend API: http://YOUR_SERVER_IP:8001"
-echo "API Docs:    http://YOUR_SERVER_IP:8001/docs"
-echo "Health:      http://YOUR_SERVER_IP:8001/health"
+echo "Backend API: https://\${BACKEND_PUBLIC_DOMAIN}/api/v1"
+echo "WebSocket:   wss://\${BACKEND_PUBLIC_DOMAIN}/api/v1/ws"
+echo "API Docs:    https://\${BACKEND_PUBLIC_DOMAIN}/docs"
+echo "Health:      https://\${BACKEND_PUBLIC_DOMAIN}/health"
 echo ""
 echo "Check logs with: sudo docker compose -f docker-compose.prod.yml logs -f"
 echo "Stop with:       sudo docker compose -f docker-compose.prod.yml down"

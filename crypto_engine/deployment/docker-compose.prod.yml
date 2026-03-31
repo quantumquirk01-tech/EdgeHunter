@@ -5,8 +5,8 @@ services:
     build:
       context: ..
       dockerfile: ./backend/Dockerfile
-    ports:
-      - "8001:8000"
+    expose:
+      - "8000"
     volumes:
       - ../backend/app:/app/app
     env_file:
@@ -19,6 +19,23 @@ services:
       - crypto-net
     command: >
       sh -c "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - BACKEND_PUBLIC_DOMAIN=${BACKEND_PUBLIC_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    networks:
+      - crypto-net
 
   db:
     image: postgres:14-alpine
@@ -48,3 +65,5 @@ networks:
 
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:
