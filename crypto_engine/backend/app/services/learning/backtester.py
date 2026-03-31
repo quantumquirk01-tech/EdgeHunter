@@ -2,6 +2,7 @@
 import asyncio
 import time
 from typing import List, Dict
+from unittest.mock import MagicMock
 
 from app.services.signal_generation.generator import generate_signal_from_event
 from app.services.risk_management.manager import assess_risk_and_create_order
@@ -21,6 +22,7 @@ async def run_backtest(historical_events: List[Dict], mock_market_data: Dict):
     
     exchange_client = MockExchange(mock_market_data)
     results = {"total_trades": 0, "approved": 0, "rejected": 0, "simulated_pnl": 0}
+    mock_db = MagicMock()
 
     for event in historical_events:
         print(f"\n--- Simulating Event: {event['token_symbol']} on {event['exchange']} ---")
@@ -35,7 +37,7 @@ async def run_backtest(historical_events: List[Dict], mock_market_data: Dict):
         
         if signal['decision'] == "ENTER":
             # 2. Risk Management
-            order = await assess_risk_and_create_order(signal)
+            order = await assess_risk_and_create_order(mock_db, signal)
             if not order:
                 print("❌ Risk Engine: REJECTED")
                 results["rejected"] += 1

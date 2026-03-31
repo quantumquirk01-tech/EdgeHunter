@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "a_very_secret_key_for_jwt_and_encryption"
     ALGORITHM: str = "HS256"
+    CORS_ORIGINS: str = "http://localhost:3000,https://edgehunter.vercel.app"
 
     class Config:
         env_file = ".env"

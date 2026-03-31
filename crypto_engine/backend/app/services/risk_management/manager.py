@@ -1,5 +1,6 @@
 
 from typing import Dict, Any, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.crud.trade import get_active_trades_count, get_daily_pnl
@@ -9,12 +10,11 @@ KILL_SWITCH_ACTIVE = False
 
 def calculate_dynamic_position_size(base_size: float, score: float, max_score: float = 15.0) -> float:
     """Scales position size based on signal conviction (score)."""
-    # Scale between 0.5x and 1.5x of base size based on score
     multiplier = 0.5 + (score / max_score)
-    multiplier = min(max(multiplier, 0.5), 1.5) # Clamp between 0.5 and 1.5
+    multiplier = min(max(multiplier, 0.5), 1.5)
     return base_size * multiplier
 
-async def assess_risk_and_create_order(signal: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+async def assess_risk_and_create_order(db: AsyncSession, signal: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     global KILL_SWITCH_ACTIVE
 
     if KILL_SWITCH_ACTIVE:
@@ -26,13 +26,13 @@ async def assess_risk_and_create_order(signal: Dict[str, Any]) -> Optional[Dict[
         return None
 
     # --- Risk Checks ---
-    daily_pnl = await get_daily_pnl()
+    daily_pnl = await get_daily_pnl(db)
     if daily_pnl <= -settings.RISK_MAX_DAILY_LOSS_USD:
         print(f"CRITICAL: Max daily loss (${settings.RISK_MAX_DAILY_LOSS_USD}) reached. ACTIVATING KILL-SWITCH.")
         KILL_SWITCH_ACTIVE = True
         return None
 
-    active_trades = await get_active_trades_count()
+    active_trades = await get_active_trades_count(db)
     if active_trades >= settings.RISK_MAX_CONCURRENT_TRADES:
         return None
 

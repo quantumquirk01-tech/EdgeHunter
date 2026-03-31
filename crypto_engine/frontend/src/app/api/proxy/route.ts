@@ -1,8 +1,10 @@
 
 import { NextResponse } from 'next/server';
 
+const DEFAULT_BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8001/api/v1';
+
 export async function GET() {
-  const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://89.45.45.164:8001/api/v1';
+  const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_BACKEND_URL;
   
   try {
     const response = await fetch(`${backendUrl}/trades/recent`, {

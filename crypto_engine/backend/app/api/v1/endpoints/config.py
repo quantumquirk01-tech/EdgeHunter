@@ -46,9 +46,11 @@ def update_settings(update: ConfigUpdate):
             "telegram_bot_token": "TELEGRAM_BOT_TOKEN",
             "telegram_chat_id": "TELEGRAM_CHAT_ID"
         }
+        updated_count = 0
         for payload_key, settings_key in mapping.items():
             value = api_keys.get(payload_key)
             if value is not None:
                 setattr(settings, settings_key, value)
-        print(f"INFO: API keys updated: {list(api_keys.keys())}")
+                updated_count += 1
+        print(f"INFO: {updated_count} API key(s) updated")
     return {"status": "success", "message": "Settings updated successfully."}

@@ -80,15 +80,12 @@ def determine_event_type(text: str) -> Optional[str]:
 
 def extract_listing_time(text: str) -> Optional[object]:
     """Parses a human-readable date/time string from the text."""
-    # This is highly complex in reality. `dateparser` is a good start.
-    # It can handle strings like "May 16, 2024, 12:00 UTC"
     try:
-        # Find a plausible date string. This regex is just an example.
         match = re.search(r'(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})\sUTC', text)
         if match:
             return dateparser.parse(match.group(1))
-        return None # Return None if no time is explicitly found
-    except:
+        return None
+    except Exception:
         return None
 
 def calculate_hype_score(text: str) -> int:

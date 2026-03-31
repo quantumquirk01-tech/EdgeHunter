@@ -2,8 +2,10 @@
 import asyncio
 import json
 from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.db.base import AsyncSessionLocal
 from app.services.signal_generation.generator import generate_signal_from_event
 from app.services.risk_management.manager import assess_risk_and_create_order
 from app.services.notification.telegram_bot import send_telegram_notification
@@ -41,8 +43,8 @@ async def signal_processing_worker():
 
                 # If the decision is to ENTER, proceed to risk management
                 if signal['decision'] == "ENTER":
-                    # The risk engine will return an order object if it passes all checks
-                    order_to_execute = await assess_risk_and_create_order(signal)
+                    async with AsyncSessionLocal() as db:
+                        order_to_execute = await assess_risk_and_create_order(db, signal)
                     
                     if order_to_execute:
                         print(f"INFO: Risk assessment passed. Pushing order to execution queue for {signal['token_symbol']}")
