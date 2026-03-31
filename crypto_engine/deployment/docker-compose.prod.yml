@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: ./backend/Dockerfile
+    ports:
+      - "8001:8000"
+    volumes:
+      - ../backend/app:/app/app
+    env_file:
+      - ../.env
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    networks:
+      - crypto-net
+    command: >
+      sh -c "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  db:
+    image: postgres:14-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-crypto_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-strong_password}
+      - POSTGRES_DB=${POSTGRES_DB:-crypto_db}
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - crypto-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+    networks:
+      - crypto-net
+
+networks:
+  crypto-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
