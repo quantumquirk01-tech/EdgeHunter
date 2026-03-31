@@ -29,6 +29,7 @@ MANIFEST
 # Next.js
 .next/
 out/
+*.tsbuildinfo
 
 # Environment
 .env
@@ -53,3 +54,6 @@ crypto_engine/frontend/node_modules/
 crypto_engine/frontend/.next/
 crypto_engine/backend/__pycache__/
 deployment/postgres_data/
+
+.vercel
+.env*.local
