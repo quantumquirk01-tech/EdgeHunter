@@ -13,8 +13,6 @@ import { FocusMode } from '../components/FocusMode';
 import { Signal } from '../types/trading';
 import { ApiKeysFormValues, ApiKeysPanel } from '../components/ApiKeysPanel';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:8000/api/v1';
-
 export default function DashboardPage() {
   useLiveSignals();
 
@@ -56,7 +54,7 @@ export default function DashboardPage() {
     if (Object.keys(filtered).length === 0) {
       return;
     }
-    const response = await fetch(`${API_BASE_URL}/config/settings`, {
+    const response = await fetch('/api/config/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ api_keys: filtered })

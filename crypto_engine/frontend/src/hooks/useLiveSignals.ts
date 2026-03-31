@@ -2,6 +2,39 @@ import { useEffect } from 'react';
 import { useDashboardStore } from '../store/dashboardStore';
 import { Signal } from '../types/trading';
 
+const resolveWebSocketUrl = () => {
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  try {
+    if (wsUrl) {
+      const socketUrl = new URL(wsUrl);
+
+      if (apiBaseUrl) {
+        const apiUrl = new URL(apiBaseUrl);
+        const apiPath = apiUrl.pathname.replace(/\/$/, '');
+
+        if (socketUrl.pathname === '/ws' && apiPath) {
+          socketUrl.pathname = `${apiPath}/ws`;
+        }
+      }
+
+      return socketUrl.toString();
+    }
+
+    if (!apiBaseUrl) {
+      return null;
+    }
+
+    const apiUrl = new URL(apiBaseUrl);
+    apiUrl.protocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    apiUrl.pathname = `${apiUrl.pathname.replace(/\/$/, '')}/ws`;
+    return apiUrl.toString();
+  } catch {
+    return null;
+  }
+};
+
 const randomToken = () => {
   const list = ['VELO', 'ALT', 'NEXA', 'FLUX', 'ZRO', 'DYM', 'STRK', 'MAV', 'JUP', 'PYTH'];
   return list[Math.floor(Math.random() * list.length)];
@@ -25,14 +58,19 @@ export function useLiveSignals() {
     const mockEnabled = process.env.NEXT_PUBLIC_ENABLE_MOCK_SIGNALS === 'true';
     let socket: WebSocket | null = null;
     let reconnectTimeout: NodeJS.Timeout;
+    let hasConnectedSocket = false;
+    let fallbackMode = false;
 
     const connect = () => {
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+      if (fallbackMode) return;
+
+      const wsUrl = resolveWebSocketUrl();
       if (!wsUrl) return;
 
       try {
         socket = new WebSocket(wsUrl);
         socket.onopen = () => {
+          hasConnectedSocket = true;
           setApiStatus('CONNECTED');
           setSystemStatus('LIVE');
           console.log('Connected to signals engine');
@@ -46,6 +84,10 @@ export function useLiveSignals() {
           }
         };
         socket.onclose = () => {
+          if (fallbackMode) {
+            return;
+          }
+
           setApiStatus('DISCONNECTED');
           setSystemStatus('DELAYED');
           console.log('Disconnected. Retrying in 3s...');
@@ -68,6 +110,15 @@ export function useLiveSignals() {
         if (res.ok) {
           const signals = await res.json();
           if (Array.isArray(signals)) {
+            if (!hasConnectedSocket) {
+              fallbackMode = true;
+              clearTimeout(reconnectTimeout);
+              if (socket) {
+                socket.onclose = null;
+                socket.close();
+                socket = null;
+              }
+            }
             signals.forEach(upsertSignal);
             setApiStatus('CONNECTED');
             setSystemStatus('LIVE');

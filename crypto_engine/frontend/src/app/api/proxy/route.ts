@@ -1,11 +1,14 @@
 
 import { NextResponse } from 'next/server';
 
-const DEFAULT_BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8001/api/v1';
+const DEFAULT_BACKEND_URL = 'http://localhost:8001/api/v1';
 
 export async function GET() {
-  const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_BACKEND_URL;
-  
+  const backendUrl =
+    process.env.BACKEND_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    DEFAULT_BACKEND_URL;
+
   try {
     const response = await fetch(`${backendUrl}/trades/recent`, {
       cache: 'no-store',
@@ -13,11 +16,10 @@ export async function GET() {
         'Content-Type': 'application/json',
       },
     });
-    
     if (!response.ok) {
       throw new Error(`Backend returned ${response.status}`);
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
