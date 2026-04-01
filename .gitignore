@@ -57,3 +57,4 @@ deployment/postgres_data/
 
 .vercel
 .env*.local
+!crypto_engine/frontend/src/lib/mockData.ts
